@@ -1,0 +1,1627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SMAC Tournament Manager</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Work+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%A5%8B%3C/text%3E%3C/svg%3E">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root {
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+
+    --ink: #1a1815;
+    --ink-soft: #322e28;
+    --crimson: #9c1f2b;
+    --crimson-dark: #6e151f;
+    --steel: #8f8c80;
+    --steel-light: #d8d5c9;
+    --paper: #f6f4ee;
+    --card: #ffffff;
+    --border: #e2ded2;
+    --text: #201d18;
+    --text-soft: #6b665b;
+    --gold: #a97a1f;
+    --silver: #7c7f86;
+    --bronze: #9c5a34;
+    --danger: #9c1f2b;
+    --ok: #2f6b3d;
+    --shadow: 0 1px 2px rgba(26,24,21,0.06);
+    --radius: 3px;
+    --font-display: 'Bebas Neue', Impact, 'Arial Narrow Bold', sans-serif;
+    --font-body: 'Work Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ink: #efece3;
+      --ink-soft: #d9d5c8;
+      --paper: #17150f;
+      --card: #211e18;
+      --border: #38332a;
+      --text: #f1eee5;
+      --text-soft: #b3ac9d;
+      --steel-light: #4a4638;
+      --shadow: 0 1px 3px rgba(0,0,0,0.4);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ink: #efece3;
+    --ink-soft: #d9d5c8;
+    --paper: #17150f;
+    --card: #211e18;
+    --border: #38332a;
+    --text: #f1eee5;
+    --text-soft: #b3ac9d;
+    --steel-light: #4a4638;
+    --shadow: 0 1px 3px rgba(0,0,0,0.4);
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-padding-top: calc(64px + env(safe-area-inset-top, 0px)); }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3 { font-family: var(--font-display); font-weight: 400; letter-spacing: 0.02em; margin: 0; color: var(--text); }
+  a { color: var(--crimson); }
+  button, input, select, textarea { font-family: var(--font-body); font-size: 15px; color: var(--text); }
+  table { border-collapse: collapse; }
+
+  /* ---------- Header ---------- */
+  .topbar {
+    position: sticky;
+    top: env(safe-area-inset-top, 0px);
+    z-index: 40;
+    background: var(--ink);
+    color: #f3f1ea;
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  .stripe {
+    height: 6px;
+    background: repeating-linear-gradient(90deg,
+      var(--crimson) 0, var(--crimson) 8.33%,
+      var(--ink) 8.33%, var(--ink) 16.66%,
+      var(--steel) 16.66%, var(--steel) 25%,
+      var(--ink) 25%, var(--ink) 33.33%);
+  }
+  .topbar-inner {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 14px 20px 0;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand img { height: 52px; width: auto; display: block; }
+  .brand-text h1 { font-size: 30px; line-height: 1; color: #fff; }
+  .brand-text p { margin: 2px 0 0; font-size: 12.5px; color: var(--steel-light); letter-spacing: 0.03em; }
+  .topbar-meta {
+    margin-left: auto;
+    text-align: right;
+    font-size: 12.5px;
+    color: var(--steel-light);
+    line-height: 1.4;
+  }
+  nav.tabs {
+    max-width: 1180px;
+    margin: 12px auto 0;
+    padding: 0 20px;
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+  }
+  nav.tabs button {
+    background: none;
+    border: none;
+    color: var(--steel-light);
+    padding: 10px 14px 12px;
+    font-size: 14.5px;
+    font-weight: 600;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    white-space: nowrap;
+  }
+  nav.tabs button:hover { color: #fff; }
+  nav.tabs button.active { color: #fff; border-bottom-color: var(--crimson); }
+
+  /* ---------- Layout ---------- */
+  main { max-width: 1180px; margin: 0 auto; padding: 24px 20px 80px; }
+  .tab-section { display: none; }
+  .tab-section.active { display: block; }
+  .section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+  .section-head h2 { font-size: 28px; }
+  .section-head .sub { color: var(--text-soft); font-size: 13.5px; margin-top: 2px; }
+  .toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+  }
+  .card-pad { padding: 20px; }
+
+  /* ---------- Buttons ---------- */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 16px;
+    border-radius: var(--radius);
+    border: 1px solid transparent;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    line-height: 1.2;
+  }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .btn-primary { background: var(--crimson); color: #fff; }
+  .btn-primary:hover:not(:disabled) { background: var(--crimson-dark); }
+  .btn-outline { background: transparent; color: var(--text); border-color: var(--border); }
+  .btn-outline:hover:not(:disabled) { border-color: var(--ink); }
+  .btn-ghost { background: transparent; color: var(--text-soft); }
+  .btn-ghost:hover:not(:disabled) { color: var(--crimson); }
+  .btn-danger { background: transparent; color: var(--danger); border-color: var(--danger); }
+  .btn-danger:hover:not(:disabled) { background: var(--danger); color: #fff; }
+  .btn-sm { padding: 5px 10px; font-size: 12.5px; }
+
+  /* ---------- Forms ---------- */
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 13px; font-weight: 600; color: var(--text-soft); margin-bottom: 5px; }
+  .field .hint { font-size: 12px; color: var(--text-soft); margin-top: 4px; }
+  .field input[type=text], .field input[type=number], .field input[type=tel],
+  .field input[type=date], .field select, .field textarea {
+    width: 100%;
+    padding: 9px 11px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--card);
+    color: var(--text);
+  }
+  .field input:focus, .field select:focus, .field textarea:focus, button:focus-visible {
+    outline: 2px solid var(--crimson);
+    outline-offset: 1px;
+  }
+  .field textarea { resize: vertical; min-height: 70px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0 16px; }
+  @media (max-width: 640px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+
+  .toggle-group { display: flex; gap: 8px; }
+  .toggle-group button {
+    flex: 1;
+    padding: 9px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--text-soft);
+  }
+  .toggle-group button.on { background: var(--ink); border-color: var(--ink); color: #fff; }
+
+  .check-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .check-row input[type=checkbox] { width: 17px; height: 17px; accent-color: var(--crimson); }
+  .check-row label { font-size: 14px; font-weight: 600; margin: 0; color: var(--text); }
+
+  .event-box { border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; margin-bottom: 10px; }
+  .event-box.checked { border-color: var(--crimson); background: color-mix(in srgb, var(--crimson) 5%, var(--card)); }
+  .event-box .division-row { margin-top: 10px; display: none; }
+  .event-box.checked .division-row { display: block; }
+
+  .waiver-box {
+    max-height: 180px;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    font-size: 13px;
+    color: var(--text-soft);
+    background: var(--paper);
+    white-space: pre-wrap;
+    margin-bottom: 12px;
+  }
+
+  fieldset { border: none; padding: 0; margin: 0 0 22px; }
+  fieldset legend {
+    font-family: var(--font-display);
+    font-size: 19px;
+    letter-spacing: 0.02em;
+    padding: 0 0 8px;
+    border-bottom: 2px solid var(--ink);
+    width: 100%;
+    margin-bottom: 14px;
+    color: var(--text);
+  }
+
+  /* ---------- Table ---------- */
+  .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); }
+  table.data { width: 100%; font-size: 13.5px; }
+  table.data th, table.data td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  table.data th { color: var(--text-soft); font-weight: 600; font-size: 12px; text-transform: none; background: var(--paper); position: sticky; top: 0; }
+  table.data tbody tr:hover { background: color-mix(in srgb, var(--ink) 4%, transparent); }
+  table.data td.num { font-variant-numeric: tabular-nums; }
+  .empty-row td { text-align: center; color: var(--text-soft); padding: 32px; white-space: normal; }
+
+  .chip { display: inline-block; padding: 2px 7px; border-radius: 20px; font-size: 11px; font-weight: 700; margin-right: 3px; border: 1px solid var(--border); color: var(--text-soft); }
+  .chip.on { background: var(--ink); border-color: var(--ink); color: #fff; }
+
+  .search-input { padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius); min-width: 220px; background: var(--card); color: var(--text); }
+
+  /* ---------- Divisions ---------- */
+  .event-tabs { display: flex; gap: 6px; margin-bottom: 18px; }
+  .event-tabs button {
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    color: var(--text-soft);
+  }
+  .event-tabs button.active { background: var(--ink); border-color: var(--ink); color: #fff; }
+
+  .division-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+  .division-card { border-top: 4px solid var(--steel); }
+  .division-card.has-competitors { border-top-color: var(--crimson); }
+  .division-card .dc-head { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: baseline; }
+  .division-card .dc-head h3 { font-size: 17px; }
+  .division-card .dc-count { font-size: 12px; color: var(--text-soft); font-weight: 600; }
+  .division-card .dc-body { padding: 6px 10px; }
+  .competitor-row { display: flex; align-items: center; gap: 8px; padding: 7px 6px; border-bottom: 1px solid var(--border); font-size: 13.5px; }
+  .competitor-row:last-child { border-bottom: none; }
+  .competitor-row .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .competitor-row .name small { display: block; color: var(--text-soft); font-size: 11.5px; }
+  .competitor-row select { padding: 4px 6px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 12.5px; background: var(--card); color: var(--text); }
+  .competitor-row select.dup { border-color: var(--danger); background: color-mix(in srgb, var(--danger) 8%, var(--card)); }
+  .dc-meta { padding: 8px 16px 12px; font-size: 12px; color: var(--text-soft); border-top: 1px dashed var(--border); }
+  .dc-empty { padding: 20px 16px; color: var(--text-soft); font-size: 13px; }
+
+  /* ---------- Results ---------- */
+  .rank-badge { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; font-size: 12px; font-weight: 800; color: #fff; background: var(--steel); }
+  tr.rank-1 .rank-badge { background: var(--gold); }
+  tr.rank-2 .rank-badge { background: var(--silver); }
+  tr.rank-3 .rank-badge { background: var(--bronze); }
+
+  /* ---------- Settings ---------- */
+  .list-editor { border: 1px solid var(--border); border-radius: var(--radius); }
+  .list-editor li { list-style: none; display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-bottom: 1px solid var(--border); font-size: 13.5px; }
+  .list-editor li:last-child { border-bottom: none; }
+  .list-editor li span { flex: 1; }
+  .list-editor { margin: 0 0 8px; padding: 0; }
+  .add-row { display: flex; gap: 8px; margin-bottom: 20px; }
+  .add-row input { flex: 1; }
+
+  /* ---------- Misc ---------- */
+  .toast-wrap { position: fixed; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%); z-index: 100; display: flex; flex-direction: column; gap: 8px; align-items: center; }
+  .toast { background: var(--ink); color: #fff; padding: 10px 18px; border-radius: var(--radius); font-size: 13.5px; box-shadow: 0 4px 14px rgba(0,0,0,0.25); }
+  .toast.err { background: var(--danger); }
+
+  .modal-overlay { position: fixed; inset: 0; background: rgba(20,18,15,0.55); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 20px; }
+  .modal-box { background: var(--card); border-radius: var(--radius); max-width: 420px; width: 100%; padding: 22px; }
+  .modal-box h3 { font-size: 20px; margin-bottom: 10px; }
+  .modal-box p { font-size: 14px; color: var(--text-soft); margin: 0 0 18px; }
+  .modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
+
+  .badge-note { font-size: 12px; color: var(--text-soft); padding: 8px 12px; background: var(--paper); border: 1px dashed var(--border); border-radius: var(--radius); }
+
+  footer.appfoot { text-align: center; padding: 30px 20px 50px; color: var(--text-soft); font-size: 12px; }
+
+  .sync-status { margin-top: 4px; font-size: 11px; font-weight: 700; letter-spacing: 0.02em; color: var(--steel-light); }
+  .sync-status.ok { color: #8fd19e; }
+  .sync-status.warn { color: #e0c17a; }
+  .sync-status.err { color: #e58a93; }
+
+  .map-modal { max-width: 640px; }
+  .map-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; max-height: 50vh; overflow-y: auto; margin-bottom: 18px; padding-right: 6px; }
+  .map-row label { display: block; font-size: 12px; font-weight: 600; color: var(--text-soft); margin-bottom: 4px; }
+  .map-row select { width: 100%; padding: 7px 8px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); color: var(--text); font-size: 12.5px; }
+  @media (max-width: 640px) { .map-grid { grid-template-columns: 1fr; } }
+
+  @media print {
+    .topbar, nav.tabs, .no-print, .toast-wrap { display: none !important; }
+    body { background: #fff; }
+    main { padding: 0; max-width: 100%; }
+    .card { box-shadow: none; border-color: #999; }
+    .division-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <img src="data:image/png;base64,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" alt="Southern Martial Arts, Inc. logo">
+      <div class="brand-text">
+        <h1 id="brand-name">Return of the Dragon</h1>
+        <p id="brand-sub">(Danger Zone) &middot; Southern Martial Arts, Inc.</p>
+      </div>
+    </div>
+    <div class="topbar-meta">
+      <div id="brand-date">Saturday, October 24, 2026</div>
+      <div id="brand-location"></div>
+      <div class="sync-status" id="sync-status">Starting up&hellip;</div>
+    </div>
+  </div>
+  <nav class="tabs" id="tabs">
+    <button data-tab="register" class="active">Register</button>
+    <button data-tab="roster">Roster</button>
+    <button data-tab="divisions">Divisions &amp; Scoring</button>
+    <button data-tab="results">Results</button>
+    <button data-tab="settings">Settings</button>
+  </nav>
+  <div class="stripe"></div>
+</header>
+
+<main>
+
+  <!-- ============ REGISTER ============ -->
+  <section class="tab-section active" id="tab-register">
+    <div class="section-head">
+      <div>
+        <h2 id="register-heading">Register a competitor</h2>
+        <div class="sub">Fill this out once per competitor. Everything saves to the roster on this computer.</div>
+      </div>
+    </div>
+
+    <form id="register-form" class="card card-pad" autocomplete="off">
+      <input type="hidden" id="f-edit-id" value="">
+
+      <fieldset>
+        <legend>Competitor</legend>
+        <div class="grid-2">
+          <div class="field">
+            <label for="f-first">First name</label>
+            <input type="text" id="f-first" required>
+          </div>
+          <div class="field">
+            <label for="f-last">Last name</label>
+            <input type="text" id="f-last" required>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label for="f-nickname">Nickname (optional)</label>
+            <input type="text" id="f-nickname">
+          </div>
+          <div class="field">
+            <label for="f-age">Age</label>
+            <input type="number" id="f-age" min="3" max="99" required>
+          </div>
+        </div>
+        <div class="field">
+          <label>Gender</label>
+          <div class="toggle-group" id="f-gender">
+            <button type="button" data-val="Male">Male</button>
+            <button type="button" data-val="Female">Female</button>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Contact</legend>
+        <div class="field">
+          <label for="f-address">Home address</label>
+          <input type="text" id="f-address">
+        </div>
+        <div class="grid-3">
+          <div class="field">
+            <label for="f-city">City</label>
+            <input type="text" id="f-city">
+          </div>
+          <div class="field">
+            <label for="f-state">State</label>
+            <input type="text" id="f-state" maxlength="2" style="text-transform:uppercase">
+          </div>
+          <div class="field">
+            <label for="f-zip">Zip</label>
+            <input type="text" id="f-zip" inputmode="numeric">
+          </div>
+        </div>
+        <div class="field">
+          <label for="f-phone">Phone</label>
+          <input type="tel" id="f-phone">
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>School</legend>
+        <div class="grid-2">
+          <div class="field">
+            <label for="f-rank">Rank / belt</label>
+            <input type="text" id="f-rank" list="rank-options" placeholder="e.g. Brown Belt">
+            <datalist id="rank-options">
+              <option value="White Belt"><option value="Yellow Belt"><option value="Orange Belt">
+              <option value="Gold Belt"><option value="Green Belt"><option value="Blue Belt">
+              <option value="Purple Belt"><option value="Brown Belt"><option value="Red Belt">
+              <option value="Black Belt">
+            </datalist>
+          </div>
+          <div class="field">
+            <label for="f-instructor">Instructor</label>
+            <input type="text" id="f-instructor" placeholder="e.g. Master Tim">
+          </div>
+        </div>
+        <div class="field">
+          <label for="f-school">School / club</label>
+          <input type="text" id="f-school">
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Events</legend>
+        <div class="event-box" data-event="kata">
+          <div class="check-row">
+            <input type="checkbox" id="f-ev-kata">
+            <label for="f-ev-kata">Kata</label>
+          </div>
+          <div class="division-row">
+            <select id="f-div-kata"></select>
+          </div>
+        </div>
+        <div class="event-box" data-event="sparring">
+          <div class="check-row">
+            <input type="checkbox" id="f-ev-sparring">
+            <label for="f-ev-sparring">Sparring</label>
+          </div>
+          <div class="division-row">
+            <select id="f-div-sparring"></select>
+          </div>
+        </div>
+        <div class="event-box" data-event="weapons">
+          <div class="check-row">
+            <input type="checkbox" id="f-ev-weapons">
+            <label for="f-ev-weapons">Weapons</label>
+          </div>
+          <div class="division-row">
+            <select id="f-div-weapons"></select>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Waiver &amp; release</legend>
+        <div class="waiver-box" id="f-waiver-text"></div>
+        <div class="check-row">
+          <input type="checkbox" id="f-waiver-agree">
+          <label for="f-waiver-agree">I have read and agree to the waiver and release above</label>
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label for="f-sig-participant">Participant signature (type full name)</label>
+            <input type="text" id="f-sig-participant">
+          </div>
+          <div class="field" id="f-guardian-wrap" style="display:none">
+            <label for="f-sig-guardian">Parent/guardian signature (required if under 18)</label>
+            <input type="text" id="f-sig-guardian">
+          </div>
+        </div>
+      </fieldset>
+
+      <div class="toolbar">
+        <button type="submit" class="btn btn-primary">Register competitor</button>
+        <button type="button" class="btn btn-outline" id="f-cancel-edit" style="display:none">Cancel edit</button>
+        <button type="button" class="btn btn-ghost" id="f-clear">Clear form</button>
+      </div>
+    </form>
+  </section>
+
+  <!-- ============ ROSTER ============ -->
+  <section class="tab-section" id="tab-roster">
+    <div class="section-head">
+      <div>
+        <h2>Roster</h2>
+        <div class="sub" id="roster-count">0 competitors registered</div>
+      </div>
+      <div class="toolbar">
+        <input type="search" class="search-input" id="roster-search" placeholder="Search name or school&hellip;">
+        <button class="btn btn-outline btn-sm no-print" id="roster-print">Print</button>
+        <button class="btn btn-outline btn-sm js-export-btn" id="roster-export-csv">Export CSV</button>
+        <button class="btn btn-primary btn-sm js-export-btn" id="roster-export-xlsx">Export Excel</button>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table class="data" id="roster-table">
+        <thead>
+          <tr>
+            <th>Bib</th><th>Name</th><th>Age</th><th>Gender</th><th>Rank</th><th>School / club</th>
+            <th>Events</th><th class="no-print">Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============ DIVISIONS ============ -->
+  <section class="tab-section" id="tab-divisions">
+    <div class="section-head">
+      <div>
+        <h2>Divisions &amp; scoring</h2>
+        <div class="sub">Competitors are grouped by the division picked at registration. Record 1st / 2nd / 3rd as each division finishes.</div>
+      </div>
+      <div class="toolbar">
+        <button class="btn btn-outline btn-sm no-print" id="divisions-print">Print current view</button>
+      </div>
+    </div>
+    <div class="event-tabs" id="event-tabs">
+      <button data-event="kata" class="active">Kata</button>
+      <button data-event="sparring">Sparring</button>
+      <button data-event="weapons">Weapons</button>
+    </div>
+    <div class="division-grid" id="division-grid"></div>
+  </section>
+
+  <!-- ============ RESULTS ============ -->
+  <section class="tab-section" id="tab-results">
+    <div class="section-head">
+      <div>
+        <h2>Results</h2>
+        <div class="sub">Total score = points from Kata + Sparring + Weapons placements.</div>
+      </div>
+      <div class="toolbar">
+        <button class="btn btn-outline btn-sm no-print" id="results-print">Print awards sheet</button>
+        <button class="btn btn-outline btn-sm js-export-btn" id="results-export-xlsx">Export Excel</button>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table class="data" id="results-table">
+        <thead>
+          <tr>
+            <th>Rank</th><th>Bib</th><th>Name</th><th>School / club</th>
+            <th>Kata</th><th>Sparring</th><th>Weapons</th><th>Total</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============ SETTINGS ============ -->
+  <section class="tab-section" id="tab-settings">
+    <div class="section-head">
+      <div>
+        <h2>Settings</h2>
+        <div class="sub">Tournament details, divisions and data backups.</div>
+      </div>
+    </div>
+
+    <div class="card card-pad" style="margin-bottom:16px">
+      <fieldset style="margin-bottom:0">
+        <legend>Tournament details</legend>
+        <div class="grid-2">
+          <div class="field">
+            <label for="s-name">Tournament name</label>
+            <input type="text" id="s-name">
+          </div>
+          <div class="field">
+            <label for="s-subtitle">Subtitle</label>
+            <input type="text" id="s-subtitle">
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label for="s-date">Date (shown as typed)</label>
+            <input type="text" id="s-date">
+          </div>
+          <div class="field">
+            <label for="s-location">Location (optional)</label>
+            <input type="text" id="s-location">
+          </div>
+        </div>
+        <div class="field">
+          <label for="s-waiver">Waiver &amp; release text</label>
+          <textarea id="s-waiver" rows="6"></textarea>
+          <div class="hint">Shown to every competitor at registration. Have this reviewed by your attorney before changing it.</div>
+        </div>
+        <button class="btn btn-primary btn-sm" id="s-save-tournament">Save details</button>
+      </fieldset>
+    </div>
+
+    <div class="card card-pad" style="margin-bottom:16px">
+      <fieldset style="margin-bottom:0">
+        <legend>Scoring</legend>
+        <div class="grid-3">
+          <div class="field"><label for="s-pts-1">1st place points</label><input type="number" id="s-pts-1" min="0"></div>
+          <div class="field"><label for="s-pts-2">2nd place points</label><input type="number" id="s-pts-2" min="0"></div>
+          <div class="field"><label for="s-pts-3">3rd place points</label><input type="number" id="s-pts-3" min="0"></div>
+        </div>
+        <button class="btn btn-primary btn-sm" id="s-save-points">Save scoring</button>
+      </fieldset>
+    </div>
+
+    <div class="card card-pad" style="margin-bottom:16px">
+      <fieldset style="margin-bottom:0">
+        <legend>Divisions</legend>
+        <div class="grid-3" id="division-editors"></div>
+      </fieldset>
+    </div>
+
+    <div class="card card-pad" style="margin-bottom:16px">
+      <fieldset style="margin-bottom:0">
+        <legend>Backup &amp; restore</legend>
+        <p class="sub" style="margin-bottom:14px">Data lives in this browser only. Export a backup regularly, especially before and after the tournament.</p>
+        <div class="toolbar" style="margin-bottom:14px">
+          <button class="btn btn-outline js-export-btn" id="backup-export-json">Export full backup (JSON)</button>
+          <button class="btn btn-outline" id="backup-import-json-btn">Restore from backup&hellip;</button>
+          <input type="file" id="backup-import-json" accept=".json" style="display:none">
+        </div>
+        <p class="sub" style="margin-bottom:8px">Bringing forward an existing roster from a spreadsheet:</p>
+        <div class="toolbar">
+          <button class="btn btn-outline" id="import-roster-btn">Import roster from Excel/CSV&hellip;</button>
+          <input type="file" id="import-roster-file" accept=".xlsx,.xls,.csv" style="display:none">
+        </div>
+        <p class="hint" style="margin-top:10px">Matches columns by name (First Name, Last Name, Club/Team, Age, etc). Review the roster afterward &mdash; not every field can be filled in automatically.</p>
+        <div id="export-unavailable-note" class="badge-note" style="margin-top:14px" hidden>File export/import isn&rsquo;t available in this view.</div>
+      </fieldset>
+    </div>
+
+    <div class="card card-pad">
+      <fieldset style="margin-bottom:0">
+        <legend>Start over</legend>
+        <p class="sub" style="margin-bottom:14px">Clears every competitor from this computer. Divisions and tournament details are kept. Export a backup first.</p>
+        <button class="btn btn-danger" id="clear-all-btn">Clear all competitors&hellip;</button>
+      </fieldset>
+    </div>
+  </section>
+
+</main>
+
+<footer class="appfoot no-print">Southern Martial Arts, Inc. &middot; Tournament Manager</footer>
+
+<div class="toast-wrap" id="toast-wrap"></div>
+<div id="modal-root"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  /* ============ Constants ============ */
+  var KATA_DIVISIONS = [
+    "Men Black Belt","Men Brown Belt","Men Blue & Purple Belts","Men Green Belt",
+    "Men Orange, Yellow, and Gold Belts","Men White Belt","Junior Men 15/16/17",
+    "Boys 13/14","Boys 10/11/12","Boys 8/9","Boys 6/7",
+    "Women Black Belt","Women (18 & Above)","Girls 13/14/15/16/17","Girls 10/11/12",
+    "Girls 6/7/8/9","Executive"
+  ];
+  var SPARRING_DIVISIONS = [
+    "Men Black Belt","Men Brown and Red Belts","Men Blue and Purple Belts","Men Green Belt",
+    "Men Orange, Yellow, Gold, and White Belts","Junior Men 15/16/17",
+    "Boys 13/14","Boys 10/11/12","Boys 8/9","Boys 6/7",
+    "Women Black Belt","Women (18 & Above)","Girls 13/14/15/16/17/18","Girls 10/11/12",
+    "Girls 6/7/8/9","Executive"
+  ];
+  var WEAPONS_DIVISIONS = ["Black Belt", "Under Black Belt"];
+
+  var DEFAULT_WAIVER = "I do hereby agree to participate in the Southern Martial Arts Championship hosted by Southern Martial Arts, Inc (referred to as \u201CCompany\u201D). The party responsible must read the entire contract before signing.\n\nI recognize the risks of injury that are common to any performing arts program that my child or I participate in and I do hereby waive and release the Company, and any instructors, from and against any and all claims, actions, causes of action, damages, costs, liabilities, expense of judgments, including attorney\u2019s fees and court costs, that arise out of my participation in this tournament by Southern Martial Arts, Inc. By signing below indicates that you have read the Waiver and Release guidelines, terms and conditions, and regulations on this and fully understand the contents. This waiver will remain on file in the Karate office unless the terms and conditions change.";
+
+  var LOCAL_STORAGE_KEY = "smac_tournament_state_v1";
+
+  var IMPORT_FIELDS = [
+    { key: "firstName", label: "First name", aliases: ["first name","first","fname","given name"] },
+    { key: "lastName", label: "Last name", aliases: ["last name","last","lname","surname","family name"] },
+    { key: "nickname", label: "Nickname", aliases: ["nickname","nick name","preferred name"] },
+    { key: "age", label: "Age", aliases: ["age"] },
+    { key: "gender", label: "Gender", aliases: ["gender","sex"] },
+    { key: "phone", label: "Phone", aliases: ["phone","phone number","mobile","cell"] },
+    { key: "address", label: "Address", aliases: ["street address","address","home address"] },
+    { key: "city", label: "City", aliases: ["city"] },
+    { key: "state", label: "State", aliases: ["state"] },
+    { key: "zip", label: "Zip", aliases: ["zip code","zip","postal code"] },
+    { key: "rank", label: "Rank / belt", aliases: ["rank","belt","your rank"] },
+    { key: "instructor", label: "Instructor", aliases: ["instructor","master","your instructor"] },
+    { key: "school", label: "School / club", aliases: ["club/team","school/club","school","school name","club","team"] },
+    { key: "kataFlag", label: "Kata \u2014 registered (any column)", aliases: ["kata"] },
+    { key: "kataDiv", label: "Kata \u2014 division (optional)", aliases: ["catergory - kata","category - kata","kata division"] },
+    { key: "sparringFlag", label: "Sparring \u2014 registered (any column)", aliases: ["sparring"] },
+    { key: "sparringDiv", label: "Sparring \u2014 division (optional)", aliases: ["catergory - sparring","category - sparring","sparring division"] },
+    { key: "weaponsFlag", label: "Weapons \u2014 registered (any column)", aliases: ["weapons","weapon"] },
+    { key: "weaponsDiv", label: "Weapons \u2014 division (optional)", aliases: ["catergory - weapons","category - weapons","weapons division"] }
+  ];
+
+  /* ============ Utilities ============ */
+  function $(sel, root){ return (root||document).querySelector(sel); }
+  function $$(sel, root){ return Array.prototype.slice.call((root||document).querySelectorAll(sel)); }
+  function esc(v){
+    return String(v===null||v===undefined? "":v).replace(/[&<>"']/g, function(s){
+      return ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"})[s];
+    });
+  }
+  function uid(){ return "c" + Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+  function fileSafe(s){
+    var out = String(s||"").replace(/[^a-z0-9]+/gi,"_").replace(/^_+|_+$/g,"");
+    return out || "SMAC";
+  }
+  function nextPow2(n){ var p=1; while(p<n) p*=2; return p; }
+
+  function toast(msg, isErr){
+    var wrap = $("#toast-wrap");
+    if(!wrap) return;
+    var el = document.createElement("div");
+    el.className = "toast" + (isErr? " err":"");
+    el.textContent = msg;
+    wrap.appendChild(el);
+    setTimeout(function(){ el.remove(); }, isErr? 4500 : 3000);
+  }
+
+  function confirmModal(opts){
+    opts = opts || {};
+    return new Promise(function(resolve){
+      var root = $("#modal-root");
+      root.innerHTML = "";
+      var overlay = document.createElement("div");
+      overlay.className = "modal-overlay";
+      overlay.innerHTML =
+        '<div class="modal-box">' +
+          '<h3></h3><p></p>' +
+          '<div class="modal-actions">' +
+            '<button type="button" class="btn btn-outline" data-act="cancel"></button>' +
+            '<button type="button" class="btn ' + (opts.danger? "btn-danger":"btn-primary") + '" data-act="ok"></button>' +
+          '</div>' +
+        '</div>';
+      overlay.querySelector("h3").textContent = opts.title || "Are you sure?";
+      overlay.querySelector("p").textContent = opts.message || "";
+      overlay.querySelector('[data-act="cancel"]').textContent = opts.cancelText || "Cancel";
+      overlay.querySelector('[data-act="ok"]').textContent = opts.confirmText || "Confirm";
+      function close(v){ root.innerHTML = ""; resolve(v); }
+      overlay.querySelector('[data-act="cancel"]').addEventListener("click", function(){ close(false); });
+      overlay.querySelector('[data-act="ok"]').addEventListener("click", function(){ close(true); });
+      overlay.addEventListener("click", function(e){ if(e.target === overlay) close(false); });
+      root.appendChild(overlay);
+    });
+  }
+
+  /* ============ State shape ============ */
+  function defaultState(){
+    return {
+      tournament: {
+        name: "Return of the Dragon",
+        subtitle: "(Danger Zone)",
+        dateText: "Saturday, October 24, 2026",
+        location: "",
+        waiverText: DEFAULT_WAIVER
+      },
+      points: { "1": 5, "2": 4, "3": 3 },
+      divisions: {
+        kata: KATA_DIVISIONS.slice(),
+        sparring: SPARRING_DIVISIONS.slice(),
+        weapons: WEAPONS_DIVISIONS.slice()
+      },
+      nextBib: 1,
+      competitors: []
+    };
+  }
+  function mergeWithDefaults(parsed){
+    var d = defaultState();
+    if(!parsed || typeof parsed !== "object") return d;
+    var pd = parsed.divisions || {};
+    return {
+      tournament: Object.assign({}, d.tournament, parsed.tournament || {}),
+      points: Object.assign({}, d.points, parsed.points || {}),
+      divisions: {
+        kata: Array.isArray(pd.kata) ? pd.kata : d.divisions.kata,
+        sparring: Array.isArray(pd.sparring) ? pd.sparring : d.divisions.sparring,
+        weapons: Array.isArray(pd.weapons) ? pd.weapons : d.divisions.weapons
+      },
+      nextBib: Number.isFinite(parsed.nextBib) ? parsed.nextBib : d.nextBib,
+      competitors: Array.isArray(parsed.competitors) ? parsed.competitors : []
+    };
+  }
+  function newCompetitor(){
+    return {
+      id: uid(), bib: null,
+      firstName: "", lastName: "", nickname: "", age: "", gender: "",
+      address: "", city: "", state: "", zip: "", phone: "",
+      rank: "", instructor: "", school: "",
+      events: { kata: false, sparring: false, weapons: false },
+      division: { kata: "", sparring: "", weapons: "" },
+      place: { kata: "", sparring: "", weapons: "" },
+      waiver: { agreed: false, participantSignature: "", guardianSignature: "", signedAt: null },
+      imported: false,
+      registeredAt: new Date().toISOString()
+    };
+  }
+
+  var state = defaultState();
+  var loading = false;
+
+  /* ============ Storage: this browser's localStorage ============ */
+  // Portable build: no Claude runtime involved. Everything saves to this
+  // browser only. To sync across devices/computers yourself, you'd wire
+  // these functions to your own backend (Firebase, Supabase, etc.).
+
+  function loadStateLocal(){
+    try {
+      var raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if(!raw) return defaultState();
+      return mergeWithDefaults(JSON.parse(raw));
+    } catch(e){
+      console.error("local load failed", e);
+      return defaultState();
+    }
+  }
+  function saveLocalState(){
+    try {
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(state));
+    } catch(e){
+      console.error("local save failed", e);
+      toast("Could not save \u2014 this browser's storage may be full or private browsing is on.", true);
+    }
+  }
+  function setSyncStatus(){
+    var el = $("#sync-status");
+    if(!el) return;
+    el.textContent = "Saved in this browser \u2014 export a backup to move it elsewhere";
+    el.className = "sync-status warn";
+  }
+
+  function nextBibNumber(){
+    var b = state.nextBib;
+    state.nextBib = b + 1;
+    return b;
+  }
+
+  function persistCompetitor(){ saveLocalState(); }
+  function persistDeleteCompetitor(){ saveLocalState(); }
+  function persistConfig(){ saveLocalState(); }
+
+  function initStorage(){
+    state = loadStateLocal();
+    loading = false;
+    setSyncStatus();
+    renderAll();
+  }
+
+  /* ============ Scoring ============ */
+  function pointsFor(place){
+    if(place === "" || place === null || place === undefined) return 0;
+    var v = state.points[String(place)];
+    return v === undefined ? 0 : Number(v);
+  }
+  function computeResults(){
+    var rows = state.competitors.map(function(c){
+      var k = c.events.kata ? pointsFor(c.place.kata) : 0;
+      var s = c.events.sparring ? pointsFor(c.place.sparring) : 0;
+      var w = c.events.weapons ? pointsFor(c.place.weapons) : 0;
+      return { c: c, k: k, s: s, w: w, total: k + s + w };
+    });
+    rows.sort(function(a,b){ return b.total - a.total || (a.c.bib||0) - (b.c.bib||0); });
+    var rank = 0, seen = 0, lastTotal = null;
+    rows.forEach(function(r){
+      seen++;
+      if(r.total !== lastTotal){ rank = seen; lastTotal = r.total; }
+      r.rank = rank;
+    });
+    return rows;
+  }
+
+  /* ============ Branding ============ */
+  function applyBranding(){
+    $("#brand-name").textContent = state.tournament.name;
+    $("#brand-sub").textContent = (state.tournament.subtitle ? state.tournament.subtitle + " \u00B7 " : "") + "Southern Martial Arts, Inc.";
+    $("#brand-date").textContent = state.tournament.dateText;
+    $("#brand-location").textContent = state.tournament.location;
+    document.title = state.tournament.name + " \u2014 SMAC Tournament Manager";
+  }
+  function renderWaiverText(){
+    $("#f-waiver-text").textContent = state.tournament.waiverText;
+  }
+
+  /* ============ Registration form ============ */
+  var currentGender = "";
+  function setGender(g){
+    currentGender = g;
+    $$("#f-gender button").forEach(function(b){ b.classList.toggle("on", b.dataset.val === g); });
+  }
+  function updateEventBoxUI(ev){
+    var chk = $("#f-ev-" + ev);
+    var box = chk.closest(".event-box");
+    box.classList.toggle("checked", chk.checked);
+  }
+  function updateGuardianVisibility(){
+    var age = Number($("#f-age").value || 0);
+    $("#f-guardian-wrap").style.display = (age && age < 18) ? "" : "none";
+  }
+  function populateDivisionSelects(){
+    ["kata","sparring","weapons"].forEach(function(ev){
+      var sel = $("#f-div-" + ev);
+      var prev = sel.value;
+      sel.innerHTML = '<option value="">Choose a division\u2026</option>' +
+        state.divisions[ev].map(function(d){ return '<option value="' + esc(d) + '">' + esc(d) + '</option>'; }).join("");
+      if(state.divisions[ev].indexOf(prev) !== -1) sel.value = prev;
+    });
+  }
+  function resetForm(){
+    $("#register-form").reset();
+    $("#f-edit-id").value = "";
+    setGender("");
+    ["kata","sparring","weapons"].forEach(updateEventBoxUI);
+    updateGuardianVisibility();
+    $("#register-heading").textContent = "Register a competitor";
+    $('#register-form button[type="submit"]').textContent = "Register competitor";
+    $("#f-cancel-edit").style.display = "none";
+  }
+  function onRegisterSubmit(e){
+    e.preventDefault();
+    var editId = $("#f-edit-id").value;
+    var first = $("#f-first").value.trim();
+    var last = $("#f-last").value.trim();
+    var age = $("#f-age").value;
+    var gender = currentGender;
+    var rank = $("#f-rank").value.trim();
+    var instructor = $("#f-instructor").value.trim();
+    var school = $("#f-school").value.trim();
+
+    if(!first || !last){ toast("Enter a first and last name.", true); return; }
+    if(!age){ toast("Enter an age.", true); return; }
+    if(!gender){ toast("Select male or female.", true); return; }
+
+    var evKata = $("#f-ev-kata").checked;
+    var evSparring = $("#f-ev-sparring").checked;
+    var evWeapons = $("#f-ev-weapons").checked;
+    if(!evKata && !evSparring && !evWeapons){ toast("Select at least one event.", true); return; }
+    if(evKata && !$("#f-div-kata").value){ toast("Choose a Kata division.", true); return; }
+    if(evSparring && !$("#f-div-sparring").value){ toast("Choose a Sparring division.", true); return; }
+    if(evWeapons && !$("#f-div-weapons").value){ toast("Choose a Weapons division.", true); return; }
+
+    if(!$("#f-waiver-agree").checked){ toast("The waiver must be agreed to before registering.", true); return; }
+    var sigParticipant = $("#f-sig-participant").value.trim();
+    if(!sigParticipant){ toast("Enter the participant signature.", true); return; }
+    var isMinor = Number(age) < 18;
+    var sigGuardian = $("#f-sig-guardian").value.trim();
+    if(isMinor && !sigGuardian){ toast("A parent/guardian signature is required for competitors under 18.", true); return; }
+
+    var c, isNew = !editId;
+    if(editId){
+      c = state.competitors.find(function(x){ return x.id === editId; });
+      if(!c) isNew = true;
+    }
+    if(isNew){ c = newCompetitor(); c.bib = nextBibNumber(); state.competitors.push(c); }
+
+    c.firstName = first; c.lastName = last; c.nickname = $("#f-nickname").value.trim();
+    c.age = Number(age); c.gender = gender;
+    c.address = $("#f-address").value.trim(); c.city = $("#f-city").value.trim();
+    c.state = $("#f-state").value.trim().toUpperCase(); c.zip = $("#f-zip").value.trim(); c.phone = $("#f-phone").value.trim();
+    c.rank = rank; c.instructor = instructor; c.school = school;
+    c.events.kata = evKata; c.events.sparring = evSparring; c.events.weapons = evWeapons;
+    c.division.kata = evKata ? $("#f-div-kata").value : "";
+    c.division.sparring = evSparring ? $("#f-div-sparring").value : "";
+    c.division.weapons = evWeapons ? $("#f-div-weapons").value : "";
+    if(!evKata) c.place.kata = "";
+    if(!evSparring) c.place.sparring = "";
+    if(!evWeapons) c.place.weapons = "";
+    c.waiver = { agreed: true, participantSignature: sigParticipant, guardianSignature: isMinor ? sigGuardian : "", signedAt: new Date().toISOString() };
+    c.imported = false;
+
+    persistCompetitor(c);
+    if(isNew) persistConfig();
+    renderRoster(); renderDivisionsTab(); renderResults();
+    toast((isNew ? "Registered " : "Updated ") + c.firstName + " " + c.lastName + (isNew ? (" \u2014 bib #" + c.bib) : "") + ".");
+    resetForm();
+  }
+  function editCompetitor(id){
+    var c = state.competitors.find(function(x){ return x.id === id; });
+    if(!c) return;
+    switchTab("register");
+    $("#f-edit-id").value = c.id;
+    $("#f-first").value = c.firstName; $("#f-last").value = c.lastName; $("#f-nickname").value = c.nickname || "";
+    $("#f-age").value = c.age || "";
+    setGender(c.gender || "");
+    $("#f-address").value = c.address || ""; $("#f-city").value = c.city || "";
+    $("#f-state").value = c.state || ""; $("#f-zip").value = c.zip || ""; $("#f-phone").value = c.phone || "";
+    $("#f-rank").value = c.rank || ""; $("#f-instructor").value = c.instructor || ""; $("#f-school").value = c.school || "";
+    ["kata","sparring","weapons"].forEach(function(ev){
+      var chk = $("#f-ev-" + ev);
+      chk.checked = !!c.events[ev];
+      updateEventBoxUI(ev);
+      $("#f-div-" + ev).value = c.division[ev] || "";
+    });
+    $("#f-waiver-agree").checked = !!c.waiver.agreed;
+    $("#f-sig-participant").value = c.waiver.participantSignature || "";
+    $("#f-sig-guardian").value = c.waiver.guardianSignature || "";
+    updateGuardianVisibility();
+    $("#register-heading").textContent = "Edit competitor";
+    $('#register-form button[type="submit"]').textContent = "Save changes";
+    $("#f-cancel-edit").style.display = "";
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+  function deleteCompetitor(id){
+    var c = state.competitors.find(function(x){ return x.id === id; });
+    if(!c) return;
+    confirmModal({
+      title: "Remove competitor?",
+      message: "Remove " + c.firstName + " " + c.lastName + " (bib #" + c.bib + ") from the roster? This cannot be undone.",
+      confirmText: "Remove", danger: true
+    }).then(function(ok){
+      if(!ok) return;
+      state.competitors = state.competitors.filter(function(x){ return x.id !== id; });
+      persistDeleteCompetitor(id);
+      renderRoster(); renderDivisionsTab(); renderResults();
+      toast("Removed " + c.firstName + " " + c.lastName + ".");
+    });
+  }
+  window.editCompetitor = editCompetitor;
+  window.deleteCompetitor = deleteCompetitor;
+
+  /* ============ Roster ============ */
+  function renderRoster(){
+    var tbody = $("#roster-table tbody");
+    if(loading){
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="8">Loading roster\u2026</td></tr>';
+      $("#roster-count").textContent = "Loading\u2026";
+      return;
+    }
+    var q = ($("#roster-search").value || "").trim().toLowerCase();
+    var list = state.competitors.filter(function(c){
+      if(!q) return true;
+      return (c.firstName + " " + c.lastName + " " + c.school + " " + c.nickname).toLowerCase().indexOf(q) !== -1;
+    }).sort(function(a,b){ return (a.bib||0) - (b.bib||0); });
+
+    $("#roster-count").textContent = state.competitors.length + " competitor" + (state.competitors.length === 1 ? "" : "s") + " registered" + (q ? (" \u00B7 " + list.length + " shown") : "");
+
+    if(list.length === 0){
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="8">' +
+        (state.competitors.length === 0 ? "No competitors yet. Use Register to add the first one." : "No competitors match your search.") +
+        "</td></tr>";
+      return;
+    }
+    tbody.innerHTML = list.map(function(c){
+      return '<tr>' +
+        '<td class="num">' + (c.bib==null? "" : c.bib) + '</td>' +
+        '<td>' + esc(c.firstName) + ' ' + esc(c.lastName) + (c.nickname ? ' <span style="color:var(--text-soft)">\u201C' + esc(c.nickname) + '\u201D</span>' : '') + '</td>' +
+        '<td class="num">' + esc(c.age) + '</td>' +
+        '<td>' + esc(c.gender) + '</td>' +
+        '<td>' + esc(c.rank) + '</td>' +
+        '<td>' + esc(c.school) + '</td>' +
+        '<td>' +
+          '<span class="chip ' + (c.events.kata? "on":"") + '">K</span>' +
+          '<span class="chip ' + (c.events.sparring? "on":"") + '">S</span>' +
+          '<span class="chip ' + (c.events.weapons? "on":"") + '">W</span>' +
+        '</td>' +
+        '<td class="no-print">' +
+          '<button type="button" class="btn btn-ghost btn-sm" onclick="editCompetitor(\'' + c.id + '\')">Edit</button> ' +
+          '<button type="button" class="btn btn-ghost btn-sm" onclick="deleteCompetitor(\'' + c.id + '\')">Delete</button>' +
+        '</td>' +
+      '</tr>';
+    }).join("");
+  }
+
+  /* ============ Divisions ============ */
+  var currentDivisionEvent = "kata";
+  function computeDivisionGroups(ev){
+    var known = state.divisions[ev];
+    var groups = {};
+    known.forEach(function(d){ groups[d] = []; });
+    var extra = {};
+    state.competitors.forEach(function(c){
+      if(!c.events[ev]) return;
+      var d = c.division[ev] || "";
+      if(d && groups.hasOwnProperty(d)){
+        groups[d].push(c);
+      } else {
+        var key = d || "(No division set)";
+        if(!extra[key]) extra[key] = [];
+        extra[key].push(c);
+      }
+    });
+    return {
+      known: known.map(function(d){ return { name: d, list: groups[d] }; }),
+      extra: Object.keys(extra).map(function(k){ return { name: k, list: extra[k] }; })
+    };
+  }
+  function divisionCardHTML(name, list, ev, isExtra){
+    var count = list.length;
+    var meta = "";
+    if(ev === "sparring" && count > 0){
+      var p = nextPow2(count);
+      meta = '<div class="dc-meta">' + count + " competitor" + (count===1?"":"s") + " \u00B7 " + (p-count) + " bye" + ((p-count)===1?"":"s") + "</div>";
+    }
+    var rows = list.length ? list.map(function(c){
+      return '<div class="competitor-row">' +
+        '<div class="name">' + esc(c.firstName) + ' ' + esc(c.lastName) + '<small>' + esc(c.school || "") + '</small></div>' +
+        '<select data-cid="' + c.id + '" data-event="' + ev + '">' +
+          '<option value="">\u2014</option>' +
+          '<option value="1"' + (c.place[ev]==="1"?" selected":"") + '>1st</option>' +
+          '<option value="2"' + (c.place[ev]==="2"?" selected":"") + '>2nd</option>' +
+          '<option value="3"' + (c.place[ev]==="3"?" selected":"") + '>3rd</option>' +
+        '</select>' +
+      '</div>';
+    }).join("") : '<div class="dc-empty">No competitors yet</div>';
+
+    return '<div class="card division-card ' + (count>0? "has-competitors":"") + '">' +
+      '<div class="dc-head"><h3>' + esc(name) + (isExtra? ' <span style="font-size:11px;color:var(--text-soft)">(unlisted)</span>':'') + '</h3><span class="dc-count">' + count + '</span></div>' +
+      '<div class="dc-body">' + rows + '</div>' +
+      meta +
+    '</div>';
+  }
+  function renderDivisionsTab(){
+    var grid = $("#division-grid");
+    if(loading){
+      grid.innerHTML = '<div class="dc-empty" style="padding:40px;text-align:center">Loading\u2026</div>';
+      return;
+    }
+    var groups = computeDivisionGroups(currentDivisionEvent);
+    var cards = [];
+    groups.known.forEach(function(g){ cards.push(divisionCardHTML(g.name, g.list, currentDivisionEvent, false)); });
+    groups.extra.forEach(function(g){ cards.push(divisionCardHTML(g.name, g.list, currentDivisionEvent, true)); });
+    grid.innerHTML = cards.join("");
+    $$('#division-grid select[data-cid]').forEach(function(sel){
+      sel.addEventListener("change", onPlaceChange);
+    });
+    markDuplicates();
+  }
+  function onPlaceChange(e){
+    var sel = e.target;
+    var cid = sel.dataset.cid, ev = sel.dataset.event;
+    var c = state.competitors.find(function(x){ return x.id === cid; });
+    if(!c) return;
+    c.place[ev] = sel.value;
+    persistCompetitor(c);
+    markDuplicates();
+    renderResults();
+  }
+  function markDuplicates(){
+    $$(".division-card").forEach(function(card){
+      var selects = $$("select[data-cid]", card);
+      var counts = {};
+      selects.forEach(function(s){ if(s.value) counts[s.value] = (counts[s.value]||0) + 1; });
+      selects.forEach(function(s){ s.classList.toggle("dup", !!(s.value && counts[s.value] > 1)); });
+    });
+  }
+
+  /* ============ Results ============ */
+  function renderResults(){
+    var tbody = $("#results-table tbody");
+    if(loading){
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="8">Loading\u2026</td></tr>';
+      return;
+    }
+    var rows = computeResults();
+    if(rows.length === 0){
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="8">No competitors yet.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = rows.map(function(r){
+      return '<tr class="' + (r.rank<=3? "rank-"+r.rank : "") + '">' +
+        '<td><span class="rank-badge">' + r.rank + '</span></td>' +
+        '<td class="num">' + (r.c.bib==null? "" : r.c.bib) + '</td>' +
+        '<td>' + esc(r.c.firstName) + ' ' + esc(r.c.lastName) + '</td>' +
+        '<td>' + esc(r.c.school) + '</td>' +
+        '<td class="num">' + (r.c.events.kata? r.k : "\u2013") + '</td>' +
+        '<td class="num">' + (r.c.events.sparring? r.s : "\u2013") + '</td>' +
+        '<td class="num">' + (r.c.events.weapons? r.w : "\u2013") + '</td>' +
+        '<td class="num"><strong>' + r.total + '</strong></td>' +
+      '</tr>';
+    }).join("");
+  }
+
+  /* ============ Settings ============ */
+  function renderSettingsForm(){
+    $("#s-name").value = state.tournament.name;
+    $("#s-subtitle").value = state.tournament.subtitle;
+    $("#s-date").value = state.tournament.dateText;
+    $("#s-location").value = state.tournament.location;
+    $("#s-waiver").value = state.tournament.waiverText;
+    $("#s-pts-1").value = state.points["1"];
+    $("#s-pts-2").value = state.points["2"];
+    $("#s-pts-3").value = state.points["3"];
+    renderDivisionEditors();
+  }
+  function renderDivisionEditors(){
+    var wrap = $("#division-editors");
+    var labels = { kata: "Kata", sparring: "Sparring", weapons: "Weapons" };
+    wrap.innerHTML = Object.keys(labels).map(function(ev){
+      return '<div>' +
+        '<label style="display:block;font-size:13px;font-weight:700;margin-bottom:6px">' + labels[ev] + '</label>' +
+        '<ul class="list-editor" data-event="' + ev + '">' +
+          state.divisions[ev].map(function(d,i){
+            return '<li><span>' + esc(d) + '</span><button type="button" class="btn btn-ghost btn-sm" data-remove="' + ev + '|' + i + '">&times;</button></li>';
+          }).join("") +
+        '</ul>' +
+        '<div class="add-row">' +
+          '<input type="text" placeholder="Add division\u2026" data-add-input="' + ev + '">' +
+          '<button type="button" class="btn btn-outline btn-sm" data-add-btn="' + ev + '">Add</button>' +
+        '</div>' +
+      '</div>';
+    }).join("");
+
+    $$("[data-remove]", wrap).forEach(function(btn){
+      btn.addEventListener("click", function(){
+        var parts = btn.dataset.remove.split("|");
+        var ev = parts[0], idx = Number(parts[1]);
+        state.divisions[ev].splice(idx, 1);
+        persistConfig();
+        renderDivisionEditors();
+        populateDivisionSelects();
+        renderDivisionsTab();
+      });
+    });
+    $$("[data-add-btn]", wrap).forEach(function(btn){
+      btn.addEventListener("click", function(){
+        var ev = btn.dataset.addBtn;
+        var input = wrap.querySelector('[data-add-input="' + ev + '"]');
+        var val = input.value.trim();
+        if(!val) return;
+        if(state.divisions[ev].indexOf(val) !== -1){ toast("That division already exists.", true); return; }
+        state.divisions[ev].push(val);
+        input.value = "";
+        persistConfig();
+        renderDivisionEditors();
+        populateDivisionSelects();
+        renderDivisionsTab();
+      });
+    });
+  }
+  function saveTournamentSettings(){
+    state.tournament.name = $("#s-name").value.trim() || "Tournament";
+    state.tournament.subtitle = $("#s-subtitle").value.trim();
+    state.tournament.dateText = $("#s-date").value.trim();
+    state.tournament.location = $("#s-location").value.trim();
+    state.tournament.waiverText = $("#s-waiver").value;
+    persistConfig();
+    applyBranding();
+    renderWaiverText();
+    toast("Tournament details saved.");
+  }
+  function savePointsSettings(){
+    state.points["1"] = Number($("#s-pts-1").value) || 0;
+    state.points["2"] = Number($("#s-pts-2").value) || 0;
+    state.points["3"] = Number($("#s-pts-3").value) || 0;
+    persistConfig();
+    renderDivisionsTab();
+    renderResults();
+    toast("Scoring saved.");
+  }
+  function onClearAll(){
+    confirmModal({
+      title: "Clear all competitors?",
+      message: "This removes every competitor from the roster. Divisions, tournament details and scoring stay. Export a backup first if you need one.",
+      confirmText: "Clear all", danger: true
+    }).then(function(ok){
+      if(!ok) return;
+      state.competitors = [];
+      state.nextBib = 1;
+      saveLocalState();
+      renderRoster(); renderDivisionsTab(); renderResults();
+      toast("Roster cleared.");
+    });
+  }
+
+  /* ============ Export: rows ============ */
+  function rosterRows(){
+    var header = ["Bib","First Name","Last Name","Nickname","Age","Gender","Rank","Instructor","School/Club",
+      "Address","City","State","Zip","Phone",
+      "Kata Division","Kata Place","Kata Points",
+      "Sparring Division","Sparring Place","Sparring Points",
+      "Weapons Division","Weapons Place","Weapons Points","Total Score"];
+    var rows = state.competitors.map(function(c){
+      return [
+        c.bib, c.firstName, c.lastName, c.nickname, c.age, c.gender, c.rank, c.instructor, c.school,
+        c.address, c.city, c.state, c.zip, c.phone,
+        c.events.kata? c.division.kata:"", c.events.kata? c.place.kata:"", c.events.kata? pointsFor(c.place.kata):"",
+        c.events.sparring? c.division.sparring:"", c.events.sparring? c.place.sparring:"", c.events.sparring? pointsFor(c.place.sparring):"",
+        c.events.weapons? c.division.weapons:"", c.events.weapons? c.place.weapons:"", c.events.weapons? pointsFor(c.place.weapons):"",
+        pointsFor(c.place.kata)*(c.events.kata?1:0) + pointsFor(c.place.sparring)*(c.events.sparring?1:0) + pointsFor(c.place.weapons)*(c.events.weapons?1:0)
+      ];
+    });
+    return [header].concat(rows);
+  }
+  function resultsRows(){
+    var header = ["Rank","Bib","First Name","Last Name","School/Club","Kata Points","Sparring Points","Weapons Points","Total Score"];
+    var rows = computeResults().map(function(r){
+      return [r.rank, r.c.bib, r.c.firstName, r.c.lastName, r.c.school, r.k, r.s, r.w, r.total];
+    });
+    return [header].concat(rows);
+  }
+  function divisionsRows(){
+    var header = ["Event","Division"];
+    var rows = [];
+    ["kata","sparring","weapons"].forEach(function(ev){
+      state.divisions[ev].forEach(function(d){ rows.push([ev, d]); });
+    });
+    return [header].concat(rows);
+  }
+  function csvEscape(v){
+    v = (v===null||v===undefined) ? "" : String(v);
+    if(/[",\r\n]/.test(v)) v = '"' + v.replace(/"/g,'""') + '"';
+    return v;
+  }
+  function toCSV(rows){
+    return rows.map(function(r){ return r.map(csvEscape).join(","); }).join("\r\n");
+  }
+
+  /* ============ File download (standard browser download, no capability needed) ============ */
+  function saveFile(filename, data){
+    try {
+      var blob = (data instanceof Blob) ? data : new Blob([data]);
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url; a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+      toast("Saved " + filename);
+    } catch(err){
+      console.error(err);
+      toast("Could not save the file.", true);
+    }
+  }
+
+  function exportRosterXLSX(){
+    if(typeof XLSX === "undefined"){ toast("The Excel library hasn't finished loading \u2014 try again in a moment.", true); return; }
+    var wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rosterRows()), "Registration");
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(resultsRows()), "Results");
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(divisionsRows()), "Divisions");
+    var out = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+    saveFile(fileSafe(state.tournament.name) + "_Roster.xlsx", new Blob([out], { type: "application/octet-stream" }));
+  }
+  function exportResultsXLSX(){
+    if(typeof XLSX === "undefined"){ toast("The Excel library hasn't finished loading \u2014 try again in a moment.", true); return; }
+    var wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(resultsRows()), "Results");
+    var out = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+    saveFile(fileSafe(state.tournament.name) + "_Results.xlsx", new Blob([out], { type: "application/octet-stream" }));
+  }
+  function exportBackupJSON(){
+    var blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+    saveFile(fileSafe(state.tournament.name) + "_backup.json", blob);
+  }
+
+  /* ============ Import: column mapping ============ */
+  function guessMapping(headers){
+    var lower = headers.map(function(h){ return h.toLowerCase(); });
+    var map = {};
+    IMPORT_FIELDS.forEach(function(f){
+      var found = "";
+      for(var i=0;i<f.aliases.length && !found;i++){
+        var idx = lower.indexOf(f.aliases[i]);
+        if(idx !== -1) found = headers[idx];
+      }
+      if(!found){
+        search:
+        for(var j=0;j<headers.length;j++){
+          for(var k=0;k<f.aliases.length;k++){
+            if(lower[j].indexOf(f.aliases[k]) !== -1){ found = headers[j]; break search; }
+          }
+        }
+      }
+      map[f.key] = found;
+    });
+    return map;
+  }
+  function getHeadersAndRows(wb, sheetName){
+    var ws = wb.Sheets[sheetName];
+    var aoa = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
+    if(aoa.length === 0) return { headers: [], rows: [] };
+    var headers = aoa[0].map(function(h,i){ var s = String(h).trim(); return s || ("Column " + (i+1)); });
+    var rows = aoa.slice(1).filter(function(r){
+      return r.some(function(v){ return String(v).trim() !== ""; });
+    }).map(function(r){
+      var obj = {};
+      headers.forEach(function(h,i){ obj[h] = r[i] !== undefined ? r[i] : ""; });
+      return obj;
+    });
+    return { headers: headers, rows: rows };
+  }
+  function startRosterImport(file){
+    var reader = new FileReader();
+    reader.onload = function(e){
+      try {
+        var data = new Uint8Array(e.target.result);
+        var wb = XLSX.read(data, { type: "array" });
+        var sheetName = wb.SheetNames.indexOf("Registration") !== -1 ? "Registration" : wb.SheetNames[0];
+        var hr = getHeadersAndRows(wb, sheetName);
+        if(hr.rows.length === 0){ toast("That file doesn't have any data rows.", true); return; }
+        openImportMapping(hr.headers, hr.rows);
+      } catch(err){
+        console.error(err);
+        toast("Could not read that file. Make sure it's a spreadsheet export.", true);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+  function openImportMapping(headers, rows){
+    var guess = guessMapping(headers);
+    var root = $("#modal-root");
+    root.innerHTML = "";
+    var overlay = document.createElement("div");
+    overlay.className = "modal-overlay";
+    var fieldRows = IMPORT_FIELDS.map(function(f){
+      var options = '<option value="">\u2014 Don\u2019t import \u2014</option>' +
+        headers.map(function(h){
+          var selAttr = (guess[f.key] === h) ? " selected" : "";
+          return '<option value="' + esc(h) + '"' + selAttr + '>' + esc(h) + '</option>';
+        }).join("");
+      return '<div class="map-row"><label>' + esc(f.label) + '</label><select data-field="' + f.key + '">' + options + '</select></div>';
+    }).join("");
+
+    overlay.innerHTML =
+      '<div class="modal-box map-modal">' +
+        '<h3>Match your columns</h3>' +
+        '<p>' + rows.length + ' row' + (rows.length===1?"":"s") + ' found. Match each field to a column from your file, or leave it as \u201CDon\u2019t import.\u201D</p>' +
+        '<div class="map-grid">' + fieldRows + '</div>' +
+        '<div class="modal-actions">' +
+          '<button type="button" class="btn btn-outline" data-act="cancel">Cancel</button>' +
+          '<button type="button" class="btn btn-primary" data-act="ok">Import ' + rows.length + ' row' + (rows.length===1?"":"s") + '</button>' +
+        '</div>' +
+      '</div>';
+    overlay.addEventListener("click", function(e){ if(e.target === overlay) root.innerHTML = ""; });
+    overlay.querySelector('[data-act="cancel"]').addEventListener("click", function(){ root.innerHTML = ""; });
+    overlay.querySelector('[data-act="ok"]').addEventListener("click", function(){
+      var mapping = {};
+      IMPORT_FIELDS.forEach(function(f){
+        mapping[f.key] = overlay.querySelector('[data-field="' + f.key + '"]').value;
+      });
+      if(!mapping.firstName && !mapping.lastName){
+        toast("Match at least First name or Last name before importing.", true);
+        return;
+      }
+      root.innerHTML = "";
+      runImport(mapping, rows);
+    });
+    root.appendChild(overlay);
+  }
+  function runImport(mapping, rows){
+    var added = 0, skipped = 0;
+    var newList = [];
+    rows.forEach(function(row){
+      function val(key){
+        var h = mapping[key];
+        if(!h) return "";
+        var v = row[h];
+        return (v === undefined || v === null) ? "" : String(v).trim();
+      }
+      var first = val("firstName"), last = val("lastName");
+      if(!first && !last){ skipped++; return; }
+      var c = newCompetitor();
+      c.firstName = first; c.lastName = last;
+      c.nickname = val("nickname");
+      c.age = val("age");
+      c.gender = val("gender");
+      c.phone = val("phone");
+      c.address = val("address"); c.city = val("city"); c.state = val("state"); c.zip = val("zip");
+      c.rank = val("rank"); c.instructor = val("instructor"); c.school = val("school");
+
+      var kFlag = val("kataFlag"), kDiv = val("kataDiv");
+      var sFlag = val("sparringFlag"), sDiv = val("sparringDiv");
+      var wFlag = val("weaponsFlag"), wDiv = val("weaponsDiv");
+      if(kFlag || kDiv){ c.events.kata = true; c.division.kata = kDiv || ""; }
+      if(sFlag || sDiv){ c.events.sparring = true; c.division.sparring = sDiv || ""; }
+      if(wFlag || wDiv){ c.events.weapons = true; c.division.weapons = wDiv || ""; }
+
+      c.imported = true;
+      c.waiver.agreed = true;
+      c.waiver.participantSignature = "(imported \u2014 waiver on file)";
+      c.bib = nextBibNumber();
+      newList.push(c);
+      added++;
+    });
+
+    state.competitors = state.competitors.concat(newList);
+    saveLocalState();
+
+    renderRoster(); renderDivisionsTab(); renderResults();
+    toast("Imported " + added + " competitor" + (added===1?"":"s") + (skipped ? (", skipped " + skipped + " blank row" + (skipped===1?"":"s")) : "") + ".");
+  }
+  function onImportRosterChange(e){
+    var file = e.target.files[0];
+    e.target.value = "";
+    if(!file) return;
+    if(typeof XLSX === "undefined"){ toast("The Excel library hasn't finished loading \u2014 try again in a moment.", true); return; }
+    startRosterImport(file);
+  }
+  function onBackupImportChange(e){
+    var file = e.target.files[0];
+    e.target.value = "";
+    if(!file) return;
+    confirmModal({
+      title: "Restore from backup?",
+      message: "This replaces everything currently in the app with the contents of " + file.name + ".",
+      confirmText: "Restore", danger: true
+    }).then(function(ok){
+      if(!ok) return;
+      file.text().then(function(text){
+        var parsed;
+        try { parsed = JSON.parse(text); }
+        catch(err){ console.error(err); toast("That file doesn't look like a valid backup.", true); return; }
+        var restored = mergeWithDefaults(parsed);
+        state = restored;
+        saveLocalState();
+        renderAll();
+        toast("Backup restored.");
+      });
+    });
+  }
+
+  /* ============ Tabs ============ */
+  function switchTab(name){
+    $$(".tab-section").forEach(function(s){ s.classList.toggle("active", s.id === "tab-" + name); });
+    $$("#tabs button").forEach(function(b){ b.classList.toggle("active", b.dataset.tab === name); });
+    if(name === "roster") renderRoster();
+    if(name === "divisions") renderDivisionsTab();
+    if(name === "results") renderResults();
+    if(name === "settings") renderSettingsForm();
+    window.scrollTo({ top: 0 });
+  }
+
+  function renderAll(){
+    applyBranding();
+    renderWaiverText();
+    populateDivisionSelects();
+    renderRoster();
+    renderDivisionsTab();
+    renderResults();
+    renderSettingsForm();
+  }
+
+  /* ============ Init ============ */
+  function init(){
+    $$("#f-gender button").forEach(function(b){ b.addEventListener("click", function(){ setGender(b.dataset.val); }); });
+    ["kata","sparring","weapons"].forEach(function(ev){
+      $("#f-ev-" + ev).addEventListener("change", function(){ updateEventBoxUI(ev); });
+    });
+    $("#f-age").addEventListener("input", updateGuardianVisibility);
+    $("#register-form").addEventListener("submit", onRegisterSubmit);
+    $("#f-clear").addEventListener("click", resetForm);
+    $("#f-cancel-edit").addEventListener("click", resetForm);
+
+    $("#roster-search").addEventListener("input", renderRoster);
+    $("#roster-print").addEventListener("click", function(){ window.print(); });
+    $("#roster-export-csv").addEventListener("click", function(){
+      saveFile(fileSafe(state.tournament.name) + "_Roster.csv", new Blob([toCSV(rosterRows())], { type: "text/csv" }));
+    });
+    $("#roster-export-xlsx").addEventListener("click", exportRosterXLSX);
+
+    $$("#event-tabs button").forEach(function(b){
+      b.addEventListener("click", function(){
+        $$("#event-tabs button").forEach(function(x){ x.classList.remove("active"); });
+        b.classList.add("active");
+        currentDivisionEvent = b.dataset.event;
+        renderDivisionsTab();
+      });
+    });
+    $("#divisions-print").addEventListener("click", function(){ window.print(); });
+
+    $("#results-print").addEventListener("click", function(){ window.print(); });
+    $("#results-export-xlsx").addEventListener("click", exportResultsXLSX);
+
+    $("#s-save-tournament").addEventListener("click", saveTournamentSettings);
+    $("#s-save-points").addEventListener("click", savePointsSettings);
+
+    $("#backup-export-json").addEventListener("click", exportBackupJSON);
+    $("#backup-import-json-btn").addEventListener("click", function(){ $("#backup-import-json").click(); });
+    $("#backup-import-json").addEventListener("change", onBackupImportChange);
+
+    $("#import-roster-btn").addEventListener("click", function(){ $("#import-roster-file").click(); });
+    $("#import-roster-file").addEventListener("change", onImportRosterChange);
+
+    $("#clear-all-btn").addEventListener("click", onClearAll);
+
+    $$("#tabs button").forEach(function(b){ b.addEventListener("click", function(){ switchTab(b.dataset.tab); }); });
+
+    updateGuardianVisibility();
+    initStorage();
+  }
+
+  document.addEventListener("DOMContentLoaded", init);
+})();
+</script>
+</body>
+</html>
