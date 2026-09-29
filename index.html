@@ -68,6 +68,12 @@
     --shadow: 0 1px 3px rgba(0,0,0,0.4);
   }
 
+  /* Make native controls (dropdown pickers, checkboxes) follow the app's light/dark theme */
+  :root { color-scheme: light dark; }
+  :root[data-theme="light"] { color-scheme: light; }
+  :root[data-theme="dark"] { color-scheme: dark; }
+  select option, select optgroup { background-color: var(--card); color: var(--text); }
+
   * { box-sizing: border-box; }
   html { scroll-padding-top: calc(64px + env(safe-area-inset-top, 0px)); }
   body {
