@@ -7,7 +7,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Work+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 100 100%27%3E%3Ctext y=%27.9em%27 font-size=%2790%27%3E%F0%9F%A5%8B%3C/text%3E%3C/svg%3E">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
   :root {
@@ -16,6 +15,11 @@
     padding-bottom: env(safe-area-inset-bottom, 0px);
 
     --ink: #1a1815;
+    --on-ink: #ffffff;
+    --hdr-bg: #14120f;
+    --hdr-text: #ffffff;
+    --hdr-muted: #e4e0d3;
+    --hdr-accent: #e0525f;
     --ink-soft: #322e28;
     --crimson: #9c1f2b;
     --crimson-dark: #6e151f;
@@ -40,6 +44,7 @@
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
       --ink: #efece3;
+      --on-ink: #17150f;
       --ink-soft: #d9d5c8;
       --paper: #17150f;
       --card: #211e18;
@@ -52,6 +57,7 @@
   }
   :root[data-theme="dark"] {
     --ink: #efece3;
+    --on-ink: #17150f;
     --ink-soft: #d9d5c8;
     --paper: #17150f;
     --card: #211e18;
@@ -83,17 +89,17 @@
     position: sticky;
     top: env(safe-area-inset-top, 0px);
     z-index: 40;
-    background: var(--ink);
-    color: #f3f1ea;
+    background: var(--hdr-bg);
+    color: var(--hdr-text);
     padding-top: env(safe-area-inset-top, 0px);
   }
   .stripe {
     height: 6px;
     background: repeating-linear-gradient(90deg,
-      var(--crimson) 0, var(--crimson) 8.33%,
-      var(--ink) 8.33%, var(--ink) 16.66%,
+      var(--hdr-accent) 0, var(--hdr-accent) 8.33%,
+      var(--hdr-bg) 8.33%, var(--hdr-bg) 16.66%,
       var(--steel) 16.66%, var(--steel) 25%,
-      var(--ink) 25%, var(--ink) 33.33%);
+      var(--hdr-bg) 25%, var(--hdr-bg) 33.33%);
   }
   .topbar-inner {
     max-width: 1180px;
@@ -107,12 +113,12 @@
   .brand { display: flex; align-items: center; gap: 12px; }
   .brand img { height: 52px; width: auto; display: block; }
   .brand-text h1 { font-size: 30px; line-height: 1; color: #fff; }
-  .brand-text p { margin: 2px 0 0; font-size: 12.5px; color: var(--steel-light); letter-spacing: 0.03em; }
+  .brand-text p { margin: 2px 0 0; font-size: 12.5px; color: var(--hdr-muted); letter-spacing: 0.03em; }
   .topbar-meta {
     margin-left: auto;
     text-align: right;
     font-size: 12.5px;
-    color: var(--steel-light);
+    color: var(--hdr-muted);
     line-height: 1.4;
   }
   nav.tabs {
@@ -126,7 +132,7 @@
   nav.tabs button {
     background: none;
     border: none;
-    color: var(--steel-light);
+    color: var(--hdr-muted);
     padding: 10px 14px 12px;
     font-size: 14.5px;
     font-weight: 600;
@@ -135,7 +141,7 @@
     white-space: nowrap;
   }
   nav.tabs button:hover { color: #fff; }
-  nav.tabs button.active { color: #fff; border-bottom-color: var(--crimson); }
+  nav.tabs button.active { color: #fff; border-bottom-color: var(--hdr-accent); }
 
   /* ---------- Layout ---------- */
   main { max-width: 1180px; margin: 0 auto; padding: 24px 20px 80px; }
@@ -211,7 +217,7 @@
     font-weight: 600;
     color: var(--text-soft);
   }
-  .toggle-group button.on { background: var(--ink); border-color: var(--ink); color: #fff; }
+  .toggle-group button.on { background: var(--ink); border-color: var(--ink); color: var(--on-ink); }
 
   .check-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
   .check-row input[type=checkbox] { width: 17px; height: 17px; accent-color: var(--crimson); }
@@ -257,7 +263,7 @@
   .empty-row td { text-align: center; color: var(--text-soft); padding: 32px; white-space: normal; }
 
   .chip { display: inline-block; padding: 2px 7px; border-radius: 20px; font-size: 11px; font-weight: 700; margin-right: 3px; border: 1px solid var(--border); color: var(--text-soft); }
-  .chip.on { background: var(--ink); border-color: var(--ink); color: #fff; }
+  .chip.on { background: var(--ink); border-color: var(--ink); color: var(--on-ink); }
 
   .search-input { padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius); min-width: 220px; background: var(--card); color: var(--text); }
 
@@ -273,7 +279,7 @@
     cursor: pointer;
     color: var(--text-soft);
   }
-  .event-tabs button.active { background: var(--ink); border-color: var(--ink); color: #fff; }
+  .event-tabs button.active { background: var(--ink); border-color: var(--ink); color: var(--on-ink); }
 
   .division-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
   .division-card { border-top: 4px solid var(--steel); }
@@ -308,7 +314,7 @@
 
   /* ---------- Misc ---------- */
   .toast-wrap { position: fixed; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); left: 50%; transform: translateX(-50%); z-index: 100; display: flex; flex-direction: column; gap: 8px; align-items: center; }
-  .toast { background: var(--ink); color: #fff; padding: 10px 18px; border-radius: var(--radius); font-size: 13.5px; box-shadow: 0 4px 14px rgba(0,0,0,0.25); }
+  .toast { background: var(--ink); color: var(--on-ink); padding: 10px 18px; border-radius: var(--radius); font-size: 13.5px; box-shadow: 0 4px 14px rgba(0,0,0,0.25); }
   .toast.err { background: var(--danger); }
 
   .modal-overlay { position: fixed; inset: 0; background: rgba(20,18,15,0.55); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 20px; }
@@ -321,7 +327,7 @@
 
   footer.appfoot { text-align: center; padding: 30px 20px 50px; color: var(--text-soft); font-size: 12px; }
 
-  .sync-status { margin-top: 4px; font-size: 11px; font-weight: 700; letter-spacing: 0.02em; color: var(--steel-light); }
+  .sync-status { margin-top: 4px; font-size: 11px; font-weight: 700; letter-spacing: 0.02em; color: var(--hdr-muted); }
   .sync-status.ok { color: #8fd19e; }
   .sync-status.warn { color: #e0c17a; }
   .sync-status.err { color: #e58a93; }
@@ -838,12 +844,11 @@
   }
 
   var state = defaultState();
-  var loading = false;
+  var loading = true;
 
-  /* ============ Storage: this browser's localStorage ============ */
-  // Portable build: no Claude runtime involved. Everything saves to this
-  // browser only. To sync across devices/computers yourself, you'd wire
-  // these functions to your own backend (Firebase, Supabase, etc.).
+  /* ============ Storage: db (synced) or localStorage (this computer only) ============ */
+  var dbCap;          // undefined = pending, null = unavailable, object = ready
+  var usingDb = false;
 
   function loadStateLocal(){
     try {
@@ -863,11 +868,23 @@
       toast("Could not save \u2014 this browser's storage may be full or private browsing is on.", true);
     }
   }
-  function setSyncStatus(){
+
+  function setSyncStatus(mode){
     var el = $("#sync-status");
     if(!el) return;
-    el.textContent = "Saved in this browser \u2014 export a backup to move it elsewhere";
-    el.className = "sync-status warn";
+    if(mode === "ok"){
+      el.textContent = "Synced \u2014 open this same link on any computer, signed in";
+      el.className = "sync-status ok";
+    } else if(mode === "local"){
+      el.textContent = "Saved on this computer only";
+      el.className = "sync-status warn";
+    } else if(mode === "err"){
+      el.textContent = "Sync trouble \u2014 check your connection";
+      el.className = "sync-status err";
+    } else {
+      el.textContent = "Starting up\u2026";
+      el.className = "sync-status";
+    }
   }
 
   function nextBibNumber(){
@@ -876,15 +893,95 @@
     return b;
   }
 
-  function persistCompetitor(){ saveLocalState(); }
-  function persistDeleteCompetitor(){ saveLocalState(); }
-  function persistConfig(){ saveLocalState(); }
+  function persistCompetitor(c){
+    if(usingDb){
+      dbCap.collection("competitors").doc(c.id).set(c).catch(function(err){
+        console.error(err); toast("Could not sync that change \u2014 check your connection.", true);
+      });
+    } else {
+      saveLocalState();
+    }
+  }
+  function persistDeleteCompetitor(id){
+    if(usingDb){
+      dbCap.collection("competitors").doc(id).delete().catch(function(err){
+        console.error(err); toast("Could not sync the removal.", true);
+      });
+    } else {
+      saveLocalState();
+    }
+  }
+  function persistConfig(){
+    if(usingDb){
+      dbCap.doc("config/settings").set({
+        tournament: state.tournament, points: state.points, divisions: state.divisions, nextBib: state.nextBib
+      }).catch(function(err){
+        console.error(err); toast("Could not sync settings \u2014 check your connection.", true);
+      });
+    } else {
+      saveLocalState();
+    }
+  }
+
+  function subscribeDb(){
+    var cfgRef = dbCap.doc("config/settings");
+    cfgRef.onSnapshot(function(snap){
+      var def = defaultState();
+      if(snap.exists){
+        var d = snap.data() || {};
+        var pd = d.divisions || {};
+        state.tournament = Object.assign({}, def.tournament, d.tournament || {});
+        state.points = Object.assign({}, def.points, d.points || {});
+        state.divisions = {
+          kata: Array.isArray(pd.kata) ? pd.kata : def.divisions.kata,
+          sparring: Array.isArray(pd.sparring) ? pd.sparring : def.divisions.sparring,
+          weapons: Array.isArray(pd.weapons) ? pd.weapons : def.divisions.weapons
+        };
+        state.nextBib = Number.isFinite(d.nextBib) ? d.nextBib : state.nextBib;
+      } else {
+        state.tournament = def.tournament; state.points = def.points;
+        state.divisions = def.divisions; state.nextBib = def.nextBib;
+        cfgRef.set({ tournament: def.tournament, points: def.points, divisions: def.divisions, nextBib: def.nextBib }).catch(function(){});
+      }
+      applyBranding(); renderWaiverText(); populateDivisionSelects(); renderSettingsForm(); renderDivisionsTab();
+    }, function(err){
+      console.error("config subscribe error", err);
+      setSyncStatus("err");
+    });
+
+    var compQuery = dbCap.collection("competitors").orderBy("bib","asc");
+    compQuery.onSnapshot(function(snap){
+      state.competitors = snap.docs.map(function(d){ return d.data(); });
+      loading = false;
+      renderRoster(); renderDivisionsTab(); renderResults();
+    }, function(err){
+      console.error("competitors subscribe error", err);
+      setSyncStatus("err");
+    });
+  }
 
   function initStorage(){
-    state = loadStateLocal();
-    loading = false;
-    setSyncStatus();
-    renderAll();
+    var ready = (window.claude && typeof window.claude.use === "function") ? window.claude.use("db") : Promise.resolve(null);
+    ready.then(function(cap){
+      dbCap = cap || null;
+      if(dbCap){
+        usingDb = true;
+        setSyncStatus("ok");
+        subscribeDb();
+      } else {
+        usingDb = false;
+        state = loadStateLocal();
+        loading = false;
+        setSyncStatus("local");
+        renderAll();
+      }
+    }).catch(function(){
+      dbCap = null; usingDb = false;
+      state = loadStateLocal();
+      loading = false;
+      setSyncStatus("local");
+      renderAll();
+    });
   }
 
   /* ============ Scoring ============ */
@@ -1294,9 +1391,17 @@
       confirmText: "Clear all", danger: true
     }).then(function(ok){
       if(!ok) return;
+      var toDelete = state.competitors.slice();
       state.competitors = [];
       state.nextBib = 1;
-      saveLocalState();
+      if(usingDb){
+        toDelete.forEach(function(c){
+          dbCap.collection("competitors").doc(c.id).delete().catch(function(){});
+        });
+        persistConfig();
+      } else {
+        saveLocalState();
+      }
       renderRoster(); renderDivisionsTab(); renderResults();
       toast("Roster cleared.");
     });
@@ -1345,22 +1450,28 @@
     return rows.map(function(r){ return r.map(csvEscape).join(","); }).join("\r\n");
   }
 
-  /* ============ File download (standard browser download, no capability needed) ============ */
+  /* ============ Downloads capability ============ */
+  var downloadsCap; // undefined = pending, null = unavailable, object = ready
+  function updateExportAvailability(){
+    var unavailable = downloadsCap === null;
+    $$(".js-export-btn").forEach(function(b){ b.disabled = unavailable; });
+    var note = $("#export-unavailable-note");
+    if(note) note.hidden = !unavailable;
+  }
   function saveFile(filename, data){
-    try {
-      var blob = (data instanceof Blob) ? data : new Blob([data]);
-      var url = URL.createObjectURL(blob);
-      var a = document.createElement("a");
-      a.href = url; a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+    if(downloadsCap === undefined){ toast("Still starting up \u2014 try again in a moment.", true); return; }
+    if(downloadsCap === null){ toast("File export isn't available in this view.", true); return; }
+    downloadsCap.save({ filename: filename, data: data }).then(function(){
       toast("Saved " + filename);
-    } catch(err){
+    }).catch(function(err){
+      if(err && err.code === "declined") return;
       console.error(err);
       toast("Could not save the file.", true);
-    }
+    });
+  }
+  function initDownloads(){
+    var ready = (window.claude && typeof window.claude.use === "function") ? window.claude.use("downloads") : Promise.resolve(null);
+    ready.then(function(cap){ downloadsCap = cap || null; }).catch(function(){ downloadsCap = null; }).then(updateExportAvailability);
   }
 
   function exportRosterXLSX(){
@@ -1515,7 +1626,16 @@
     });
 
     state.competitors = state.competitors.concat(newList);
-    saveLocalState();
+
+    if(usingDb){
+      var writes = newList.map(function(c){
+        return dbCap.collection("competitors").doc(c.id).set(c).catch(function(err){ console.error(err); });
+      });
+      Promise.all(writes).catch(function(){ toast("Some imported rows may not have synced.", true); });
+      persistConfig();
+    } else {
+      saveLocalState();
+    }
 
     renderRoster(); renderDivisionsTab(); renderResults();
     toast("Imported " + added + " competitor" + (added===1?"":"s") + (skipped ? (", skipped " + skipped + " blank row" + (skipped===1?"":"s")) : "") + ".");
@@ -1542,8 +1662,17 @@
         try { parsed = JSON.parse(text); }
         catch(err){ console.error(err); toast("That file doesn't look like a valid backup.", true); return; }
         var restored = mergeWithDefaults(parsed);
-        state = restored;
-        saveLocalState();
+        if(usingDb){
+          var oldIds = state.competitors.map(function(c){ return c.id; });
+          state = restored;
+          var ops = oldIds.map(function(id){ return dbCap.collection("competitors").doc(id).delete().catch(function(){}); })
+            .concat(restored.competitors.map(function(c){ return dbCap.collection("competitors").doc(c.id).set(c).catch(function(){}); }));
+          Promise.all(ops).catch(function(){ toast("Some data may not have synced \u2014 check your connection.", true); });
+          persistConfig();
+        } else {
+          state = restored;
+          saveLocalState();
+        }
         renderAll();
         toast("Backup restored.");
       });
@@ -1616,7 +1745,10 @@
 
     $$("#tabs button").forEach(function(b){ b.addEventListener("click", function(){ switchTab(b.dataset.tab); }); });
 
+    renderAll();
     updateGuardianVisibility();
+    setSyncStatus("");
+    initDownloads();
     initStorage();
   }
 
