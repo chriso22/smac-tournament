@@ -228,18 +228,6 @@
   .event-box .division-row { margin-top: 10px; display: none; }
   .event-box.checked .division-row { display: block; }
 
-  .waiver-box {
-    max-height: 180px;
-    overflow-y: auto;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 12px 14px;
-    font-size: 13px;
-    color: var(--text-soft);
-    background: var(--paper);
-    white-space: pre-wrap;
-    margin-bottom: 12px;
-  }
 
   fieldset { border: none; padding: 0; margin: 0 0 22px; }
   fieldset legend {
@@ -500,24 +488,6 @@
         </div>
       </fieldset>
 
-      <fieldset>
-        <legend>Waiver &amp; release</legend>
-        <div class="waiver-box" id="f-waiver-text"></div>
-        <div class="check-row">
-          <input type="checkbox" id="f-waiver-agree">
-          <label for="f-waiver-agree">I have read and agree to the waiver and release above</label>
-        </div>
-        <div class="grid-2">
-          <div class="field">
-            <label for="f-sig-participant">Participant signature (type full name)</label>
-            <input type="text" id="f-sig-participant">
-          </div>
-          <div class="field" id="f-guardian-wrap" style="display:none">
-            <label for="f-sig-guardian">Parent/guardian signature (required if under 18)</label>
-            <input type="text" id="f-sig-guardian">
-          </div>
-        </div>
-      </fieldset>
 
       <div class="toolbar">
         <button type="submit" class="btn btn-primary">Register competitor</button>
@@ -630,11 +600,6 @@
             <input type="text" id="s-location">
           </div>
         </div>
-        <div class="field">
-          <label for="s-waiver">Waiver &amp; release text</label>
-          <textarea id="s-waiver" rows="6"></textarea>
-          <div class="hint">Shown to every competitor at registration. Have this reviewed by your attorney before changing it.</div>
-        </div>
         <button class="btn btn-primary btn-sm" id="s-save-tournament">Save details</button>
       </fieldset>
     </div>
@@ -714,7 +679,6 @@
   ];
   var WEAPONS_DIVISIONS = ["Black Belt", "Under Black Belt"];
 
-  var DEFAULT_WAIVER = "I do hereby agree to participate in the Southern Martial Arts Championship hosted by Southern Martial Arts, Inc (referred to as \u201CCompany\u201D). The party responsible must read the entire contract before signing.\n\nI recognize the risks of injury that are common to any performing arts program that my child or I participate in and I do hereby waive and release the Company, and any instructors, from and against any and all claims, actions, causes of action, damages, costs, liabilities, expense of judgments, including attorney\u2019s fees and court costs, that arise out of my participation in this tournament by Southern Martial Arts, Inc. By signing below indicates that you have read the Waiver and Release guidelines, terms and conditions, and regulations on this and fully understand the contents. This waiver will remain on file in the Karate office unless the terms and conditions change.";
 
   var LOCAL_STORAGE_KEY = "smac_tournament_state_v1";
 
@@ -799,8 +763,7 @@
         name: "Return of the Dragon",
         subtitle: "(Danger Zone)",
         dateText: "Saturday, October 24, 2026",
-        location: "",
-        waiverText: DEFAULT_WAIVER
+        location: ""
       },
       points: { "1": 5, "2": 4, "3": 3 },
       divisions: {
@@ -837,7 +800,6 @@
       events: { kata: false, sparring: false, weapons: false },
       division: { kata: "", sparring: "", weapons: "" },
       place: { kata: "", sparring: "", weapons: "" },
-      waiver: { agreed: false, participantSignature: "", guardianSignature: "", signedAt: null },
       imported: false,
       registeredAt: new Date().toISOString()
     };
@@ -943,7 +905,7 @@
         state.divisions = def.divisions; state.nextBib = def.nextBib;
         cfgRef.set({ tournament: def.tournament, points: def.points, divisions: def.divisions, nextBib: def.nextBib }).catch(function(){});
       }
-      applyBranding(); renderWaiverText(); populateDivisionSelects(); renderSettingsForm(); renderDivisionsTab();
+      applyBranding(); populateDivisionSelects(); renderSettingsForm(); renderDivisionsTab();
     }, function(err){
       console.error("config subscribe error", err);
       setSyncStatus("err");
@@ -1015,9 +977,6 @@
     $("#brand-location").textContent = state.tournament.location;
     document.title = state.tournament.name + " \u2014 SMAC Tournament Manager";
   }
-  function renderWaiverText(){
-    $("#f-waiver-text").textContent = state.tournament.waiverText;
-  }
 
   /* ============ Registration form ============ */
   var currentGender = "";
@@ -1029,10 +988,6 @@
     var chk = $("#f-ev-" + ev);
     var box = chk.closest(".event-box");
     box.classList.toggle("checked", chk.checked);
-  }
-  function updateGuardianVisibility(){
-    var age = Number($("#f-age").value || 0);
-    $("#f-guardian-wrap").style.display = (age && age < 18) ? "" : "none";
   }
   function populateDivisionSelects(){
     ["kata","sparring","weapons"].forEach(function(ev){
@@ -1048,7 +1003,6 @@
     $("#f-edit-id").value = "";
     setGender("");
     ["kata","sparring","weapons"].forEach(updateEventBoxUI);
-    updateGuardianVisibility();
     $("#register-heading").textContent = "Register a competitor";
     $('#register-form button[type="submit"]').textContent = "Register competitor";
     $("#f-cancel-edit").style.display = "none";
@@ -1076,12 +1030,6 @@
     if(evSparring && !$("#f-div-sparring").value){ toast("Choose a Sparring division.", true); return; }
     if(evWeapons && !$("#f-div-weapons").value){ toast("Choose a Weapons division.", true); return; }
 
-    if(!$("#f-waiver-agree").checked){ toast("The waiver must be agreed to before registering.", true); return; }
-    var sigParticipant = $("#f-sig-participant").value.trim();
-    if(!sigParticipant){ toast("Enter the participant signature.", true); return; }
-    var isMinor = Number(age) < 18;
-    var sigGuardian = $("#f-sig-guardian").value.trim();
-    if(isMinor && !sigGuardian){ toast("A parent/guardian signature is required for competitors under 18.", true); return; }
 
     var c, isNew = !editId;
     if(editId){
@@ -1102,7 +1050,6 @@
     if(!evKata) c.place.kata = "";
     if(!evSparring) c.place.sparring = "";
     if(!evWeapons) c.place.weapons = "";
-    c.waiver = { agreed: true, participantSignature: sigParticipant, guardianSignature: isMinor ? sigGuardian : "", signedAt: new Date().toISOString() };
     c.imported = false;
 
     persistCompetitor(c);
@@ -1128,10 +1075,6 @@
       updateEventBoxUI(ev);
       $("#f-div-" + ev).value = c.division[ev] || "";
     });
-    $("#f-waiver-agree").checked = !!c.waiver.agreed;
-    $("#f-sig-participant").value = c.waiver.participantSignature || "";
-    $("#f-sig-guardian").value = c.waiver.guardianSignature || "";
-    updateGuardianVisibility();
     $("#register-heading").textContent = "Edit competitor";
     $('#register-form button[type="submit"]').textContent = "Save changes";
     $("#f-cancel-edit").style.display = "";
@@ -1313,7 +1256,6 @@
     $("#s-subtitle").value = state.tournament.subtitle;
     $("#s-date").value = state.tournament.dateText;
     $("#s-location").value = state.tournament.location;
-    $("#s-waiver").value = state.tournament.waiverText;
     $("#s-pts-1").value = state.points["1"];
     $("#s-pts-2").value = state.points["2"];
     $("#s-pts-3").value = state.points["3"];
@@ -1369,10 +1311,8 @@
     state.tournament.subtitle = $("#s-subtitle").value.trim();
     state.tournament.dateText = $("#s-date").value.trim();
     state.tournament.location = $("#s-location").value.trim();
-    state.tournament.waiverText = $("#s-waiver").value;
     persistConfig();
     applyBranding();
-    renderWaiverText();
     toast("Tournament details saved.");
   }
   function savePointsSettings(){
@@ -1618,8 +1558,6 @@
       if(wFlag || wDiv){ c.events.weapons = true; c.division.weapons = wDiv || ""; }
 
       c.imported = true;
-      c.waiver.agreed = true;
-      c.waiver.participantSignature = "(imported \u2014 waiver on file)";
       c.bib = nextBibNumber();
       newList.push(c);
       added++;
@@ -1692,7 +1630,6 @@
 
   function renderAll(){
     applyBranding();
-    renderWaiverText();
     populateDivisionSelects();
     renderRoster();
     renderDivisionsTab();
@@ -1706,7 +1643,6 @@
     ["kata","sparring","weapons"].forEach(function(ev){
       $("#f-ev-" + ev).addEventListener("change", function(){ updateEventBoxUI(ev); });
     });
-    $("#f-age").addEventListener("input", updateGuardianVisibility);
     $("#register-form").addEventListener("submit", onRegisterSubmit);
     $("#f-clear").addEventListener("click", resetForm);
     $("#f-cancel-edit").addEventListener("click", resetForm);
@@ -1746,7 +1682,6 @@
     $$("#tabs button").forEach(function(b){ b.addEventListener("click", function(){ switchTab(b.dataset.tab); }); });
 
     renderAll();
-    updateGuardianVisibility();
     setSyncStatus("");
     initDownloads();
     initStorage();
